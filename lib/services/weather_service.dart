@@ -6,7 +6,7 @@ import 'package:farmsetu_weather/model/weather_model.dart';
 class WeatherService {
   final Dio _dio = Dio();
 
-  /// Get current weather (for popup)
+  /// Original method that returns raw OpenWeatherMap current weather data.
   Future<Map<String, dynamic>> getCurrentWeather(double lat, double lon) async {
     final url = '${Constants.weatherBaseUrl}/weather'
         '?lat=$lat&lon=$lon'
@@ -21,8 +21,17 @@ class WeatherService {
     }
   }
 
-  /// Get 5‑day / 3‑hour forecast and aggregate to daily min/max.
-  /// Returns list of DailyWeather for the next 5 days.
+  /// Simplified method that extracts only the fields needed for the popup.
+  Future<Map<String, dynamic>> getCurrentWeatherSimple(double lat, double lon) async {
+    final raw = await getCurrentWeather(lat, lon); // Now this will work
+    return {
+      'temperature': raw['main']['temp'],
+      'windspeed': raw['wind']['speed'],
+      'weathercode': raw['weather'][0]['id'],
+    };
+  }
+
+  /// Forecast method – unchanged from your previous version.
   Future<List<DailyWeather>> getDailyForecast(double lat, double lon) async {
     final url = '${Constants.weatherBaseUrl}/forecast'
         '?lat=$lat&lon=$lon'

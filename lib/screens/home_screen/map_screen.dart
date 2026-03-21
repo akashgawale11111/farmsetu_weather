@@ -74,61 +74,92 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  void _showWeatherPopup(LatLng position) async {
-    try {
-      final weather = await ref.read(
-          currentWeatherProvider((position.latitude, position.longitude)).future);
-      final temp = (weather as Map<String, dynamic>)['temperature'] ?? 0.0;
-      final wind = (weather as Map<String, dynamic>)['windspeed'] ?? 0.0;
-      final weatherCode = (weather as Map<String, dynamic>)['weathercode'] ?? 0;
+void _showWeatherPopup(LatLng position) async {
+  // Show a loading dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => const AlertDialog(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 12),
+          Text('Fetching weather...'),
+        ],
+      ),
+    ),
+  );
 
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(_selectedLocationName.isNotEmpty
-              ? _selectedLocationName
-              : 'Weather'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Temperature: $temp°C'),
-              Text('Wind Speed: $wind km/h'),
-              Text('Weather Code: $weatherCode'),
-              const SizedBox(height: 8),
-              const Text('Tap for full details & 7‑day forecast'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => WeatherDetailScreen(
-                      latitude: position.latitude,
-                      longitude: position.longitude,
-                      locationName: _selectedLocationName,
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Details'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Close'),
-            ),
+  try {
+    // Use the simplified method to get weather data
+    final weather = await ref.read(weatherServiceProvider)
+        .getCurrentWeatherSimple(position.latitude, position.longitude);
+
+    // Close the loading dialog
+    Navigator.pop(context);
+
+    // Show the weather popup
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_selectedLocationName.isNotEmpty
+            ? _selectedLocationName
+            : 'Weather'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Temperature: ${weather['temperature']}°C'),
+            Text('Wind Speed: ${weather['windspeed']} km/h'),
+            Text('Condition: ${_getWeatherCondition(weather['weathercode'])}'),
+            const SizedBox(height: 8),
+            const Text('Tap "Details" for full forecast & save to Firebase'),
           ],
         ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load weather: $e')),
-      );
-    }
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WeatherDetailScreen(
+                    latitude: position.latitude,
+                    longitude: position.longitude,
+                    locationName: _selectedLocationName,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Details'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    // Close loading dialog
+    Navigator.pop(context);
+    // Show error dialog
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Weather Error'),
+        content: Text('Could not load weather: $e'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
+}
 
   Future<void> _searchCity() async {
     final query = _searchController.text.trim();
@@ -143,14 +174,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         _selectedPosition = LatLng(lat, lng);
         _selectedLocationName = name;
       });
+      // Highlight the city on the map by animating to it
       _mapController
           .animateCamera(CameraUpdate.newLatLngZoom(_selectedPosition!, 12));
+      // Show weather popup for the city
       _showWeatherPopup(_selectedPosition!);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('City not found')),
       );
     }
+  }
+
+  String _getWeatherCondition(int code) {
+    // OpenWeatherMap weather condition codes
+    if (code >= 200 && code < 300) return 'Thunderstorm';
+    if (code >= 300 && code < 400) return 'Drizzle';
+    if (code >= 500 && code < 600) return 'Rain';
+    if (code >= 600 && code < 700) return 'Snow';
+    if (code >= 700 && code < 800) return 'Atmosphere';
+    if (code == 800) return 'Clear sky';
+    if (code > 800) return 'Cloudy';
+    return 'Unknown';
   }
 
   @override
