@@ -59,12 +59,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _selectedPosition = position;
     });
     // Get location name from coordinates
-    final name = await _geocodingService.reverseGeocode(
-        position.latitude, position.longitude);
-    setState(() {
-      _selectedLocationName = name;
-    });
-    _showWeatherPopup(position);
+    try {
+      final name = await _geocodingService.reverseGeocode(
+          position.latitude, position.longitude);
+      setState(() {
+        _selectedLocationName = name;
+      });
+      _showWeatherPopup(position);
+    } catch (e) {
+      setState(() {
+        _selectedLocationName = 'Unknown Location';
+      });
+      _showWeatherPopup(position);
+    }
   }
 
   void _showWeatherPopup(LatLng position) async {
