@@ -1,10 +1,8 @@
-//import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:farmsetu_weather/model/weather_model.dart';
-import 'package:farmsetu_weather/provider/weather_provider.dart';
+import 'package:farmsetu_weather/services/model/weather_model.dart';
+import 'package:farmsetu_weather/services/provider/weather_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
 
 class WeatherDetailScreen extends ConsumerStatefulWidget {
   final double latitude;
@@ -19,43 +17,15 @@ class WeatherDetailScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<WeatherDetailScreen> createState() => _WeatherDetailScreenState();
+  ConsumerState<WeatherDetailScreen> createState() =>
+      _WeatherDetailScreenState();
 }
 
 class _WeatherDetailScreenState extends ConsumerState<WeatherDetailScreen> {
- // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // Future<void> _saveCurrentDay(DailyWeather currentDay) async {
-  //   try {
-  //     await _firestore.collection('saved_weather').add({
-  //       'location': widget.locationName,
-  //       'latitude': widget.latitude,
-  //       'longitude': widget.longitude,
-  //       'date': currentDay.date.toIso8601String(),
-  //       'maxTemp': currentDay.maxTemp,
-  //       'minTemp': currentDay.minTemp,
-  //       'precipitation': currentDay.precipitation,
-  //       'windSpeed': currentDay.windSpeed,
-  //       'weatherCode': currentDay.weatherCode,
-  //       'savedAt': FieldValue.serverTimestamp(),
-  //     });
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text('Weather data saved to Firebase!')),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Save failed: $e')),
-  //       );
-  //     }
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
-    final forecastAsync = ref.watch(dailyForecastProvider((widget.latitude, widget.longitude)));
+    final forecastAsync =
+        ref.watch(dailyForecastProvider((widget.latitude, widget.longitude)));
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +34,8 @@ class _WeatherDetailScreenState extends ConsumerState<WeatherDetailScreen> {
       body: forecastAsync.when(
         data: (dailyForecast) {
           // dailyForecast contains up to 5 days (next 5 days)
-          final currentDay = dailyForecast.isNotEmpty ? dailyForecast.first : null;
+          final currentDay =
+              dailyForecast.isNotEmpty ? dailyForecast.first : null;
           final futureDays = dailyForecast.skip(1).toList();
 
           return ListView(
@@ -84,11 +55,6 @@ class _WeatherDetailScreenState extends ConsumerState<WeatherDetailScreen> {
                         const SizedBox(height: 8),
                         _buildWeatherTile(currentDay),
                         const SizedBox(height: 12),
-                        // ElevatedButton.icon(
-                        //   onPressed: () => _saveCurrentDay(currentDay),
-                        //   icon: const Icon(Icons.save),
-                        //   label: const Text('Save this day'),
-                        // ),
                       ],
                     ),
                   ),
@@ -97,7 +63,8 @@ class _WeatherDetailScreenState extends ConsumerState<WeatherDetailScreen> {
               if (futureDays.isNotEmpty) ...[
                 Text(
                   'Next ${futureDays.length} Days Forecast',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 ...futureDays.map((day) => _buildWeatherTile(day)).toList(),

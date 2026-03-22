@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:farmsetu_weather/constants.dart';
-import 'package:farmsetu_weather/model/weather_model.dart';
+import 'package:farmsetu_weather/services/constants.dart';
+import 'package:farmsetu_weather/services/model/weather_model.dart';
 
 
 class WeatherService {
@@ -8,16 +8,29 @@ class WeatherService {
 
   /// Original method that returns raw OpenWeatherMap current weather data.
   Future<Map<String, dynamic>> getCurrentWeather(double lat, double lon) async {
+    // Validate coordinates
+    if (lat == 0.0 && lon == 0.0) {
+      throw Exception('Invalid coordinates: lat and lon cannot both be zero');
+    }
+
     final url = '${Constants.weatherBaseUrl}/weather'
         '?lat=$lat&lon=$lon'
         '&appid=${Constants.openWeatherApiKey}'
         '&units=metric'; // Celsius
 
-    final response = await _dio.get(url);
-    if (response.statusCode == 200) {
-      return response.data;
-    } else {
-      throw Exception('Failed to load current weather');
+    // print('🌤️ Requesting: $url');
+
+    try {
+      final response = await _dio.get(url);
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      // print('❌ Dio error: ${e.message}');
+      // print('Response: ${e.response?.data}');
+      throw Exception('Weather API error: ${e.message}');
     }
   }
 

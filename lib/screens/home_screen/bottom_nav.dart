@@ -1,6 +1,6 @@
 import 'package:farmsetu_weather/screens/home_screen/home_page.dart';
 import 'package:farmsetu_weather/screens/home_screen/map_screen.dart';
-import 'package:farmsetu_weather/utils/custom_drover.dart';
+import 'package:farmsetu_weather/screens/utils/custom_drover.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

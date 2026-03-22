@@ -1,4 +1,4 @@
-import 'package:farmsetu_weather/provider/weather_provider.dart';
+import 'package:farmsetu_weather/services/provider/weather_provider.dart';
 import 'package:farmsetu_weather/services/geocoding_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +15,7 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
-  late GoogleMapController _mapController;
+  GoogleMapController? _mapController;
   final loc.Location _location = loc.Location();
   final GeocodingService _geocodingService = GeocodingService();
   final TextEditingController _searchController = TextEditingController();
@@ -45,12 +45,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final locationData = await _location.getLocation();
     final lat = locationData.latitude ?? 0.0;
     final lng = locationData.longitude ?? 0.0;
+
     setState(() {
       _currentPosition = LatLng(lat, lng);
       _selectedPosition = _currentPosition;
     });
-    _mapController
-        .animateCamera(CameraUpdate.newLatLngZoom(_currentPosition!, 12));
+
+    // Move the camera if the map controller is ready
+    if (_mapController != null) {
+      await _mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(_currentPosition!, 12),
+      );
+    }
+
+    // Show weather popup for the new location
     _showWeatherPopup(_currentPosition!);
   }
 
@@ -75,31 +83,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
 void _showWeatherPopup(LatLng position) async {
-  // Show a loading dialog
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => const AlertDialog(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 12),
-          Text('Fetching weather...'),
-        ],
-      ),
-    ),
-  );
+  if (position.latitude == 0.0 && position.longitude == 0.0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Invalid location coordinates')),
+    );
+    return;
+  }
 
   try {
-    // Use the simplified method to get weather data
-    final weather = await ref.read(weatherServiceProvider)
-        .getCurrentWeatherSimple(position.latitude, position.longitude);
+    final weather = await ref.read(
+        currentWeatherProvider((position.latitude, position.longitude)).future);
 
-    // Close the loading dialog
-    Navigator.pop(context);
+    // Safely extract data
+    final main = weather['main'] as Map<String, dynamic>?;
+    final wind = weather['wind'] as Map<String, dynamic>?;
+    final weatherList = weather['weather'] as List?;
 
-    // Show the weather popup
+    final temp = main?['temp'] as num? ?? 0.0;
+    final windSpeed = wind?['speed'] as num? ?? 0.0;
+    final weatherCode = (weatherList?.isNotEmpty == true)
+        ? (weatherList!.first['id'] as int? ?? 0)
+        : 0;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -110,11 +115,11 @@ void _showWeatherPopup(LatLng position) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Temperature: ${weather['temperature']}°C'),
-            Text('Wind Speed: ${weather['windspeed']} km/h'),
-            Text('Condition: ${_getWeatherCondition(weather['weathercode'])}'),
+            Text('Temperature: $temp°C'),
+            Text('Wind Speed: $windSpeed km/h'),
+            Text('Weather Code: $weatherCode'),
             const SizedBox(height: 8),
-            const Text('Tap "Details" for full forecast & save to Firebase'),
+            const Text('Tap for full details & 7‑day forecast'),
           ],
         ),
         actions: [
@@ -142,21 +147,8 @@ void _showWeatherPopup(LatLng position) async {
       ),
     );
   } catch (e) {
-    // Close loading dialog
-    Navigator.pop(context);
-    // Show error dialog
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Weather Error'),
-        content: Text('Could not load weather: $e'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load weather: $e')),
     );
   }
 }
@@ -164,38 +156,39 @@ void _showWeatherPopup(LatLng position) async {
   Future<void> _searchCity() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
-    final results = await _geocodingService.searchCity(query);
-    if (results.isNotEmpty) {
-      final first = results.first;
-      final lat = first['latitude'] as double;
-      final lng = first['longitude'] as double;
-      final name = first['name'] as String;
-      setState(() {
-        _selectedPosition = LatLng(lat, lng);
-        _selectedLocationName = name;
-      });
-      // Highlight the city on the map by animating to it
-      _mapController
-          .animateCamera(CameraUpdate.newLatLngZoom(_selectedPosition!, 12));
-      // Show weather popup for the city
-      _showWeatherPopup(_selectedPosition!);
-    } else {
+
+    try {
+      final results = await _geocodingService.searchCity(query);
+
+      if (results.isNotEmpty) {
+        final first = results.first;
+
+        final lat = first['latitude'] as double;
+        final lng = first['longitude'] as double;
+        final name = first['name'] as String;
+
+        final newPosition = LatLng(lat, lng);
+
+        setState(() {
+          _selectedPosition = newPosition;
+          _selectedLocationName = name;
+        });
+
+        _mapController!.animateCamera(
+          CameraUpdate.newLatLngZoom(newPosition, 12),
+        );
+
+        _onMapTapped(newPosition);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('City not found')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('City not found')),
+        SnackBar(content: Text('Search failed: $e')),
       );
     }
-  }
-
-  String _getWeatherCondition(int code) {
-    // OpenWeatherMap weather condition codes
-    if (code >= 200 && code < 300) return 'Thunderstorm';
-    if (code >= 300 && code < 400) return 'Drizzle';
-    if (code >= 500 && code < 600) return 'Rain';
-    if (code >= 600 && code < 700) return 'Snow';
-    if (code >= 700 && code < 800) return 'Atmosphere';
-    if (code == 800) return 'Clear sky';
-    if (code > 800) return 'Cloudy';
-    return 'Unknown';
   }
 
   @override
@@ -211,6 +204,7 @@ void _showWeatherPopup(LatLng position) async {
               children: [
                 Expanded(
                   child: TextField(
+                    onSubmitted: (_) => _searchCity,
                     controller: _searchController,
                     decoration: const InputDecoration(
                       hintText: 'Search city...',
@@ -240,7 +234,14 @@ void _showWeatherPopup(LatLng position) async {
                 target: _currentPosition!,
                 zoom: 12,
               ),
-              onMapCreated: (controller) => _mapController = controller,
+              onMapCreated: (controller) {
+                _mapController = controller;
+                // Now that the map controller is initialized, animate to current location
+                _mapController!.animateCamera(
+                    CameraUpdate.newLatLngZoom(_currentPosition!, 12));
+                // Show weather popup for current location
+                _showWeatherPopup(_currentPosition!);
+              },
               onTap: _onMapTapped,
               myLocationEnabled: true,
               myLocationButtonEnabled: false,
