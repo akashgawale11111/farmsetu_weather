@@ -114,13 +114,13 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   children: [
                     Image.asset(
-                      'assets/images/techflux.png',
+                      'assets/images/farmsetu.png',
                       width: 100,
                       height: 100,
                     ),
                     const SizedBox(height: 5),
                     const Text(
-                      "TechFlux Solution",
+                      "FarmSetu Weather",
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white,

@@ -19,14 +19,14 @@ class _BottomNavExampleState extends ConsumerState<BottomNav> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      const HomeScreen(),
+      const FarmerChatScreen(),
       const MapScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
         elevation: 4,
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: Colors.green,
         automaticallyImplyLeading: false,
         // actions: [
         //   IconButton(
@@ -69,7 +69,7 @@ class _BottomNavExampleState extends ConsumerState<BottomNav> {
           borderRadius: BorderRadius.circular(30),
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.deepOrange,
+              color: Colors.green,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black26,
@@ -102,7 +102,7 @@ class _BottomNavExampleState extends ConsumerState<BottomNav> {
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          color: Colors.deepOrange,
+          color: Colors.green,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -82,76 +82,77 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-void _showWeatherPopup(LatLng position) async {
-  if (position.latitude == 0.0 && position.longitude == 0.0) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Invalid location coordinates')),
-    );
-    return;
-  }
+  void _showWeatherPopup(LatLng position) async {
+    if (position.latitude == 0.0 && position.longitude == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid location coordinates')),
+      );
+      return;
+    }
 
-  try {
-    final weather = await ref.read(
-        currentWeatherProvider((position.latitude, position.longitude)).future);
+    try {
+      final weather = await ref.read(
+          currentWeatherProvider((position.latitude, position.longitude))
+              .future);
 
-    // Safely extract data
-    final main = weather['main'] as Map<String, dynamic>?;
-    final wind = weather['wind'] as Map<String, dynamic>?;
-    final weatherList = weather['weather'] as List?;
+      // Safely extract data
+      final main = weather['main'] as Map<String, dynamic>?;
+      final wind = weather['wind'] as Map<String, dynamic>?;
+      final weatherList = weather['weather'] as List?;
 
-    final temp = main?['temp'] as num? ?? 0.0;
-    final windSpeed = wind?['speed'] as num? ?? 0.0;
-    final weatherCode = (weatherList?.isNotEmpty == true)
-        ? (weatherList!.first['id'] as int? ?? 0)
-        : 0;
+      final temp = main?['temp'] as num? ?? 0.0;
+      final windSpeed = wind?['speed'] as num? ?? 0.0;
+      final weatherCode = (weatherList?.isNotEmpty == true)
+          ? (weatherList!.first['id'] as int? ?? 0)
+          : 0;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(_selectedLocationName.isNotEmpty
-            ? _selectedLocationName
-            : 'Weather'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Temperature: $temp°C'),
-            Text('Wind Speed: $windSpeed km/h'),
-            Text('Weather Code: $weatherCode'),
-            const SizedBox(height: 8),
-            const Text('Tap for full details & 7‑day forecast'),
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(_selectedLocationName.isNotEmpty
+              ? _selectedLocationName
+              : 'Weather'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Temperature: $temp°C'),
+              Text('Wind Speed: $windSpeed km/h'),
+              Text('Weather Code: $weatherCode'),
+              const SizedBox(height: 8),
+              const Text('Tap for full details & 7‑day forecast'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WeatherDetailScreen(
+                      latitude: position.latitude,
+                      longitude: position.longitude,
+                      locationName: _selectedLocationName,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Details'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => WeatherDetailScreen(
-                    latitude: position.latitude,
-                    longitude: position.longitude,
-                    locationName: _selectedLocationName,
-                  ),
-                ),
-              );
-            },
-            child: const Text('Details'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load weather: $e')),
-    );
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load weather: $e')),
+      );
+    }
   }
-}
 
   Future<void> _searchCity() async {
     final query = _searchController.text.trim();
