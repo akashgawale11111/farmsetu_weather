@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:farmsetu_weather/services/aiservice.dart';
 
 class FarmerChatScreen extends StatefulWidget {
   const FarmerChatScreen({super.key});
@@ -11,33 +11,49 @@ class FarmerChatScreen extends StatefulWidget {
 class _FarmerChatScreenState extends State<FarmerChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> messages = [];
+  bool _isLoading = false;
 
-  void sendMessage([String? customText]) {
+  final AIService _aiService = AIService();
+
+  // ✅ SEND MESSAGE
+  void sendMessage([String? customText]) async {
     final text = (customText ?? _controller.text).trim();
     if (text.isEmpty) return;
 
     setState(() {
       messages.add({'role': 'user', 'text': text});
+      _isLoading = true;
     });
 
     _controller.clear();
 
-    // Dummy AI response
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      String reply = await _aiService.sendMessage(text);
+
+      setState(() {
+        messages.add({'role': 'bot', 'text': reply});
+      });
+    } catch (e) {
       setState(() {
         messages.add({
           'role': 'bot',
-          'text': "🌾 Advice: Check soil moisture and avoid overwatering."
+          'text': "❌ Error: Unable to get response"
         });
       });
+    }
+
+    setState(() {
+      _isLoading = false;
     });
   }
 
+  // ✅ VOICE ASSISTANT
   void openVoiceAssistant() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         title: const Text("🎤 Voice Assistant"),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
@@ -51,7 +67,6 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // simulate voice input
               sendMessage("How to protect crops from rain?");
             },
             child: const Text("Stop"),
@@ -61,17 +76,18 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     );
   }
 
+  // ✅ IMAGE PICKER (DEMO)
   void openImagePicker() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("📷 Upload Crop Photo"),
-        content: const Text("(Demo) Image selected successfully"),
+        content: const Text("Image selected successfully"),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              sendMessage("[Image of crop uploaded]");
+              sendMessage("Check this crop disease");
             },
             child: const Text("OK"),
           )
@@ -80,13 +96,16 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     );
   }
 
+  // ✅ CHAT BUBBLE
   Widget buildMessage(Map<String, String> msg) {
     final isUser = msg['role'] == 'user';
 
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment:
+          isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        margin:
+            const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         padding: const EdgeInsets.all(12),
         constraints: const BoxConstraints(maxWidth: 260),
         decoration: BoxDecoration(
@@ -103,12 +122,13 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     );
   }
 
+  // ✅ UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.agriculture),
             SizedBox(width: 8),
             Text('Farmer AI Assistant 🌾'),
@@ -118,46 +138,69 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
       ),
       body: Column(
         children: [
+          // ✅ CHAT LIST
           Expanded(
             child: ListView.builder(
-              itemCount: messages.length,
+              itemCount: messages.length +
+                  (_isLoading ? 1 : 0),
               itemBuilder: (context, index) {
+                if (_isLoading &&
+                    index == messages.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
                 return buildMessage(messages[index]);
               },
             ),
           ),
 
-          // INPUT AREA
+          // ✅ INPUT AREA
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8, vertical: 6),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.image, color: Colors.green),
+                  icon: const Icon(Icons.image,
+                      color: Colors.green),
                   onPressed: openImagePicker,
                 ),
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    enabled: !_isLoading,
                     decoration: InputDecoration(
-                      hintText: 'Ask farming question...',
+                      hintText:
+                          'Ask farming question...',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius:
+                            BorderRadius.circular(20),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      contentPadding:
+                          const EdgeInsets.symmetric(
+                              horizontal: 12),
                     ),
-                    onSubmitted: (_) => sendMessage(),
+                    onSubmitted: (_) =>
+                        !_isLoading ? sendMessage() : null,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.mic, color: Colors.green),
+                  icon: const Icon(Icons.mic,
+                      color: Colors.green),
                   onPressed: openVoiceAssistant,
                 ),
                 CircleAvatar(
                   backgroundColor: Colors.green,
                   child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    onPressed: () => sendMessage(),
+                    icon: const Icon(Icons.send,
+                        color: Colors.white),
+                    onPressed: () =>
+                        !_isLoading ? sendMessage() : null,
                   ),
                 )
               ],
