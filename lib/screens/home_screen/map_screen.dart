@@ -193,6 +193,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+         backgroundColor:  const Color.fromARGB(255, 249, 235, 255),
         title: const Text('Farmer Weather'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -204,10 +205,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   child: TextField(
                     onSubmitted: (_) => _searchCity,
                     controller: _searchController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Search city...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                       border: OutlineInputBorder(
+                        borderSide:  const BorderSide(
+                            color: Colors.orange),
+                        borderRadius:
+                            BorderRadius.circular(20),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
                   ),
                 ),

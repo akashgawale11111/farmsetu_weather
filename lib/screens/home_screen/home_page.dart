@@ -15,7 +15,7 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
 
   final AIService _aiService = AIService();
 
-  // ✅ SEND MESSAGE
+  //  SEND MESSAGE
   void sendMessage([String? customText]) async {
     final text = (customText ?? _controller.text).trim();
     if (text.isEmpty) return;
@@ -37,7 +37,7 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
       setState(() {
         messages.add({
           'role': 'bot',
-          'text': "❌ Error: Unable to get response"
+          'text': " Error: Unable to get response"
         });
       });
     }
@@ -47,7 +47,7 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     });
   }
 
-  // ✅ VOICE ASSISTANT
+  //  VOICE ASSISTANT
   void openVoiceAssistant() {
     showDialog(
       context: context,
@@ -76,7 +76,7 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     );
   }
 
-  // ✅ IMAGE PICKER (DEMO)
+  //  IMAGE PICKER (DEMO)
   void openImagePicker() {
     showDialog(
       context: context,
@@ -96,7 +96,7 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     );
   }
 
-  // ✅ CHAT BUBBLE
+  //  CHAT BUBBLE
   Widget buildMessage(Map<String, String> msg) {
     final isUser = msg['role'] == 'user';
 
@@ -122,7 +122,7 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
     );
   }
 
-  // ✅ UI
+  //  UI for farmer assistant
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,32 +134,43 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
             Text('Farmer AI Assistant 🌾'),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor:  const Color.fromARGB(255, 252, 249, 255),
       ),
       body: Column(
         children: [
-          // ✅ CHAT LIST
+          //  CHAT LIST
           Expanded(
-            child: ListView.builder(
-              itemCount: messages.length +
-                  (_isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (_isLoading &&
-                    index == messages.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-                return buildMessage(messages[index]);
-              },
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  Color.fromARGB(255, 229, 208, 253),
+                  Color.fromARGB(255, 255, 211, 242),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              ),
+              child: ListView.builder(
+                itemCount: messages.length +
+                    (_isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (_isLoading &&
+                      index == messages.length) {
+                    return const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                  return buildMessage(messages[index]);
+                },
+              ),
             ),
           ),
 
-          // ✅ INPUT AREA
+          //  INPUT AREA
           Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: 8, vertical: 6),
@@ -178,6 +189,9 @@ class _FarmerChatScreenState extends State<FarmerChatScreen> {
                       hintText:
                           'Ask farming question...',
                       border: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          width: 1,
+                            color: Colors.orange),
                         borderRadius:
                             BorderRadius.circular(20),
                       ),

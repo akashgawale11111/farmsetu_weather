@@ -36,20 +36,6 @@ class CustomDrawer extends ConsumerWidget {
               );
             },
           ),
-
-                    ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('logout'),
-            onTap: () {
-             
-              //ref.read(authProvider.notifier).logout();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const SaveData()),
-              );
-            
-            },
-          ),
         ],
       ),
     );
