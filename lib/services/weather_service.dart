@@ -35,13 +35,17 @@ class WeatherService {
   }
 
   /// Simplified method that extracts only the fields needed for the popup.
-  Future<Map<String, dynamic>> getCurrentWeatherSimple(double lat, double lon) async {
-    final raw = await getCurrentWeather(lat, lon); // Now this will work
-    return {
-      'temperature': raw['main']['temp'],
-      'windspeed': raw['wind']['speed'],
-      'weathercode': raw['weather'][0]['id'],
-    };
+  Future<DailyWeather> getCurrentWeatherSimple(double lat, double lon) async {
+    final raw = await getCurrentWeather(lat, lon);
+    final temp = raw['main']['temp'] as double;
+    return DailyWeather(
+      date: DateTime.now(),
+      maxTemp: temp,
+      minTemp: temp,
+      precipitation: 0.0,
+      windSpeed: (raw['wind']['speed'] as num).toDouble(),
+      weatherCode: raw['weather'][0]['id'] as int,
+    );
   }
 
   /// Forecast method – unchanged from your previous version.

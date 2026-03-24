@@ -5,7 +5,7 @@ import '../weather_service.dart';
 final weatherServiceProvider = Provider((ref) => WeatherService());
 
 final currentWeatherProvider =
-    FutureProvider.family<Map<String, dynamic>, (double, double)>(
+    FutureProvider.family<DailyWeather, (double, double)>(
         (ref, coords) async {
   final service = ref.watch(weatherServiceProvider);
   return await service.getCurrentWeatherSimple(coords.$1, coords.$2);

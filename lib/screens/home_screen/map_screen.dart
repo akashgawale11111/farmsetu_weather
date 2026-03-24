@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as loc;
 import 'package:permission_handler/permission_handler.dart';
 import 'weather_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -19,6 +20,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final loc.Location _location = loc.Location();
   final GeocodingService _geocodingService = GeocodingService();
   final TextEditingController _searchController = TextEditingController();
+  final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
   LatLng? _currentPosition;
   LatLng? _selectedPosition;
   String _selectedLocationName = '';
@@ -95,17 +97,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           currentWeatherProvider((position.latitude, position.longitude))
               .future);
 
-      // Safely extract data
-      final main = weather['main'] as Map<String, dynamic>?;
-      final wind = weather['wind'] as Map<String, dynamic>?;
-      final weatherList = weather['weather'] as List?;
-
-      final temp = main?['temp'] as num? ?? 0.0;
-      final windSpeed = wind?['speed'] as num? ?? 0.0;
-      final weatherCode = (weatherList?.isNotEmpty == true)
-          ? (weatherList!.first['id'] as int? ?? 0)
-          : 0;
-
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -116,11 +107,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Temperature: $temp°C'),
-              Text('Wind Speed: $windSpeed km/h'),
-              Text('Weather Code: $weatherCode'),
-              const SizedBox(height: 8),
-              const Text('Tap for full details & 7‑day forecast'),
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: ListTile(
+                  title: Text(dateFormat.format(weather.date)),
+                  subtitle: Text(
+                    'Max: ${weather.maxTemp}°C  Min: ${weather.minTemp}°C\n'
+                    'Wind: ${weather.windSpeed} km/h',
+                  ),
+                  trailing: Text('Code: ${weather.weatherCode}'),
+                ),
+              )
             ],
           ),
           actions: [
