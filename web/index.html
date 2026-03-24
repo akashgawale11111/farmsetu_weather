@@ -31,6 +31,23 @@
 
   <title>farmsetu_weather</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- Google Maps JavaScript API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGv9znbx4hAdCp_6YK0-HO2XVKI4ZXALk&callback=initMap" async defer></script>
+  
+  <!-- Google Maps initialization script -->
+  <script>
+    function initMap() {
+      console.log('Google Maps API initialized successfully');
+      window.googleMapsReady = true;
+    }
+    
+    // Handle Google Maps API loading errors
+    window.gm_authFailure = function() {
+      console.error('Google Maps API authentication failed');
+      alert('Google Maps API authentication failed. Please check your API key.');
+    };
+  </script>
 </head>
 <body>
   <!--

@@ -6,4 +6,7 @@ class Constants {
   static const String openAIBaseUrl = 'https://api.openai.com/v1/chat/completions';
    static const String apiKey = "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";
   static const String baseUrl = "https://api.openai.com/v1/chat/completions";
+  
+  // Google Maps API Key
+  static const String googleMapsApiKey = 'AIzaSyBGv9znbx4hAdCp_6YK0-HO2XVKI4ZXALk'; // Your Google Maps API key
 }
