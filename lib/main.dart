@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async{
   runApp(
+    //riverpod provider scope
     const ProviderScope(
       child: MyApp(),
     ),
